@@ -30,14 +30,7 @@ jobs:
       run: |
         php artisan key:generate
         php artisan migrate --force
-        php artisan db:seed --force
         
-    - name: Installing packages
-      run: yarn install --network-concurrency 1
-      
-    - name: Building application
-      run: yarn run build
-      
     - name: Generate deployment package
       run: |
         zip ../laravel-backpack.zip -r * .[^.]* -x "vendor/*"
