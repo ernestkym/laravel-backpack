@@ -1,0 +1,70 @@
+name: beanstalk-deploy
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-versions: '7.4'
+
+    steps:
+    - uses: actions/checkout@v2
+        
+    - name: Copy environment configuration
+      run: 'echo -e "${{secrets.ENV}}" > .env'
+              
+    - name: Configure PHP composer
+      run: composer install -q --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist
+      
+    - name: Setup project folder
+      run: |
+        composer create-project --prefer-dist laravel/laravel laravel-backpack
+        cd laravel-backpack
+      
+    - name: Generate keys
+      run: |
+        php artisan key:generate
+        php artisan migrate
+        php artisan db:seed
+        
+    - name: Installing packages
+      run: yarn install --network-concurrency 1
+      
+    - name: Building application
+      run: yarn run build
+      
+    - name: Generate deployment package
+      run: |
+        zip ../laravel-backpack.zip -r * .[^.]* -x "vendor/*"
+        cd ../
+        
+    - name: Get timestamp
+      uses: gerred/actions/current-time@master
+      id: current-time
+
+    - name: Run string replace
+      uses: frabert/replace-string-action@master
+      id: format-time
+      with:
+        pattern: '[:\.]+'
+        string: "${{ steps.current-time.outputs.time }}"
+        replace-with: '-'
+        flags: 'g'
+    
+    - name: Beanstalk Deploy for app
+      uses: runningdeveloper/beanstalk-deploy@v11
+      with:
+         aws_access_key: "${{secrets.AWS_ACCESS_KEY}}"
+         aws_secret_key: "${{secrets.AWS_SECRET_KEY}}"
+         application_name: "backpack-app"
+         environment_name: "laravel-backpack"
+         region: "ap-east-1"
+         version_label: "${{ github.event.repository.name }}-${{ steps.format-time.outputs.replaced }}"
+         region_specific_s3: "true"
+         use_existing_version_if_available: "true"
+         deployment_package: "laravel-backpack.zip"
