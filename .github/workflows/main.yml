@@ -24,7 +24,6 @@ jobs:
     - name: Setup project folder
       run: |
         composer create-project --prefer-dist laravel/laravel laravel-backpack
-        cd laravel-backpack
       
     - name: Generate keys
       run: |
@@ -33,8 +32,7 @@ jobs:
         
     - name: Generate deployment package
       run: |
-        zip ../laravel-backpack.zip -r * .[^.]* -x "vendor/*"
-        cd ../
+        zip laravel-backpack.zip -r * .[^.]* -x "vendor/*"
         
     - name: Get timestamp
       uses: gerred/actions/current-time@master
