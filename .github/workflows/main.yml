@@ -19,11 +19,7 @@ jobs:
       run: 'echo -e "${{secrets.ENV}}" > .env'
               
     - name: Configure PHP composer
-      run: composer install -q --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist
-      
-    - name: Setup project folder
-      run: |
-        composer create-project --prefer-dist laravel/laravel laravel-backpack
+      run: composer install -q --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist  
       
     - name: Generate keys
       run: |
@@ -32,7 +28,7 @@ jobs:
         
     - name: Generate deployment package
       run: |
-        zip laravel-backpack.zip -r * .[^.]* -x "vendor/*"
+        zip laravel-backpack.zip -r * .[^.]*
         
     - name: Get timestamp
       uses: gerred/actions/current-time@master
